@@ -8,12 +8,17 @@ F.setMouseOffset(canvas.getBoundingClientRect());
 
 // Constants
 const camSpeed = 800; // Speed of camera
-const playerSpeed = 1800; // Speed of player (increase in v * mod)
+const ground = 400;
+
+const playerSpeed = 2200; // Speed of player (increase in v * mod)
 const playerSlowSpeed = 1800; // Speed of player slowing down (decrease in v * mod)
 const playerMaxVel = 400; // Terminal velocity for player (v)
-const portalWidth = 20; // Width of portal (px)
+const playerJump = 1000;
+const playerFall = 1000;
+
+const portalWidth = 10; // Width of portal (px)
 const portalBackWidth = 0.5; // Width of back (relative to portalWidth)
-const portalTransition = 200; // Duration of portal transition (ms)
+const portalTransition = 100; // Duration of portal transition (ms)
 const portalTransitionOpacity = 0.1; // Opacity of player when transitioning (0-1)
 
 // Global variables
@@ -34,7 +39,7 @@ function reset() {
 
   // Reset player
   player = {
-    x: 200,
+    x: 280,
     y: 150,
     w: 40,
     h: 70,
@@ -44,167 +49,46 @@ function reset() {
 
   // Set portals
   //TODO Move to level file
-  if (F.keys.Shift) {
-    portals = [
-      {
-        blue: {
-          x: 50,
-          y: 80,
-          d: 1,
-        },
-        orange: {
-          x: 300,
-          y: 80,
-          d: 0,
-        },
+  portals = [
+    {
+      blue: {
+        x: 80,
+        y: ground,
+        d: 2,
       },
+      orange: {
+        x: 200,
+        y: ground,
+        d: 2,
+      },
+    },
 
-      {
-        blue: {
-          x: 50,
-          y: 300,
-          d: 3,
-        },
-        orange: {
-          x: 300,
-          y: 300,
-          d: 2,
-        },
+    {
+      blue: {
+        x: 400,
+        y: ground,
+        d: 2,
       },
+      orange: {
+        x: 400,
+        y: 50,
+        d: 0,
+      },
+    },
 
-      {
-        blue: {
-          x: 500,
-          y: 200,
-          d: 1,
-        },
-        orange: {
-          x: 700,
-          y: 200,
-          d: 2,
-        },
+    {
+      blue: {
+        x: 550,
+        y: ground,
+        d: 2,
       },
-
-      {
-        blue: {
-          x: 500,
-          y: 400,
-          d: 3,
-        },
-        orange: {
-          x: 700,
-          y: 400,
-          d: 0,
-        },
+      orange: {
+        x: 620,
+        y: 60,
+        d: 3,
       },
-    ];
-  } else {
-    portals = [
-      {
-        blue: {
-          x: 50,
-          y: 50,
-          d: 1,
-        },
-        orange: {
-          x: 300,
-          y: 50,
-          d: 3,
-        },
-      },
-
-      {
-        blue: {
-          x: 50,
-          y: 200,
-          d: 3,
-        },
-        orange: {
-          x: 300,
-          y: 200,
-          d: 1,
-        },
-      },
-
-      {
-        blue: {
-          x: 50,
-          y: 350,
-          d: 3,
-        },
-        orange: {
-          x: 300,
-          y: 350,
-          d: 3,
-        },
-      },
-
-      {
-        blue: {
-          x: 50,
-          y: 480,
-          d: 1,
-        },
-        orange: {
-          x: 300,
-          y: 480,
-          d: 1,
-        },
-      },
-
-      {
-        blue: {
-          x: 370,
-          y: 100,
-          d: 2,
-        },
-        orange: {
-          x: 370,
-          y: 400,
-          d: 0,
-        },
-      },
-
-      {
-        blue: {
-          x: 480,
-          y: 100,
-          d: 0,
-        },
-        orange: {
-          x: 480,
-          y: 400,
-          d: 2,
-        },
-      },
-
-      {
-        blue: {
-          x: 590,
-          y: 100,
-          d: 2,
-        },
-        orange: {
-          x: 590,
-          y: 400,
-          d: 2,
-        },
-      },
-
-      {
-        blue: {
-          x: 700,
-          y: 100,
-          d: 0,
-        },
-        orange: {
-          x: 700,
-          y: 400,
-          d: 0,
-        },
-      },
-    ];
-  }
+    },
+  ];
   for (var i in portals) {
     for (var color in portals[i]) {
       portals[i][color].l = 100;
@@ -224,6 +108,15 @@ function render() {
   ctx.scale(cam.z, cam.z);
   ctx.translate(-canvas.width / 2, -canvas.height / 2);
   ctx.translate(-cam.x, -cam.y);
+
+  // Ground
+  ctx.fillStyle = "darkgrey";
+  ctx.fillRect(
+    0,
+    ground,
+    canvas.width,
+    canvas.height - ground,
+  );
 
   // Canvas box
   ctx.strokeStyle = "grey";
@@ -310,15 +203,17 @@ function render() {
     ctx.globalAlpha = portalTransitionOpacity;
   }
 
+  // Flip player
+  ctx.save();
+  ctx.translate(x + player.w / 2, y + player.h / 2);
+  ctx.scale(player.flipX ? -1 : 1, player.flipY ? -1 : 1);
+  ctx.translate(-x - player.w / 2, -y - player.h / 2);
+
   ctx.fillStyle = "magenta";
   ctx.fillRect(x, y, player.w, player.h);
   ctx.fillStyle = "purple";
-  ctx.fillRect(
-    x - (player.flip ? player.w * 0.3 : 0),
-    y,
-    player.w * 1.3,
-    player.h * 0.1,
-  );
+  ctx.fillRect(x, y, player.w * 1.3, player.h * 0.1);
+  ctx.restore();
 }
 
 function update(mod) {
@@ -347,6 +242,7 @@ function update(mod) {
   if (
     !(Date.now() - player.lastPortal < portalTransition)
   ) {
+    // Move
     if (F.keys.a_ ^ F.keys.d_) {
       player.vx += playerSpeed * mod * (F.keys.a_ ? -1 : 1);
     } else {
@@ -357,17 +253,18 @@ function update(mod) {
           playerSlowSpeed * mod * Math.sign(player.vx);
       }
     }
-    if (F.keys.w_ ^ F.keys.s_) {
-      player.vy += playerSpeed * mod * (F.keys.w_ ? -1 : 1);
-    } else {
-      if (Math.abs(player.vy) < playerSlowSpeed * mod) {
-        player.vy = 0;
-      } else {
-        player.vy -=
-          playerSlowSpeed * mod * Math.sign(player.vy);
+
+    // Jump
+    if (F.keys.Space || F.keys.w_) {
+      if (player.y >= ground - player.h) {
+        player.vy -= playerJump;
       }
     }
 
+    // Fall
+    player.vy += playerFall * mod;
+
+    // Max velocity
     player.vx = F.border(
       player.vx,
       -playerMaxVel,
@@ -379,14 +276,26 @@ function update(mod) {
       playerMaxVel,
     );
 
+    // Apply velocity
     player.x += player.vx * mod;
     player.y += player.vy * mod;
+    // Flip x to direction
     if (player.vx !== 0) {
-      player.flip = player.vx < 0;
+      player.flipX = player.vx < 0;
+    }
+    // Unflip y at peak
+    if (player.vy >= 0) {
+      player.flipY = false;
     }
 
-    // Move player
-    if (F.mouse.left) {
+    // Stop falling at floor
+    if (player.y > ground - player.h) {
+      player.y = ground - player.h;
+      player.vy = 0;
+    }
+
+    // Move player with mouse
+    if (F.keys.z_ && F.mouse.left) {
       player.x = F.mouse.x + cam.x;
       player.y = F.mouse.y + cam.y;
     }
@@ -437,6 +346,7 @@ function update(mod) {
               case "uu":
               case "dd":
                 player.vy *= -1;
+                player.flipY = true;
                 break;
               case "ud":
               case "du":
