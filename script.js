@@ -13,7 +13,7 @@ const playerSlowSpeed = 1800; // Speed of player slowing down (decrease in v * m
 const playerMaxVel = 400; // Terminal velocity for player (v)
 const portalWidth = 20; // Width of portal (px)
 const portalBackWidth = 0.5; // Width of back (relative to portalWidth)
-const portalTransition = 100; // Duration of portal transition (ms)
+const portalTransition = 200; // Duration of portal transition (ms)
 const portalTransitionOpacity = 0.1; // Opacity of player when transitioning (0-1)
 
 // Global variables
@@ -81,7 +81,7 @@ function reset() {
         orange: {
           x: 700,
           y: 200,
-          d: 0,
+          d: 2,
         },
       },
 
@@ -94,7 +94,7 @@ function reset() {
         orange: {
           x: 700,
           y: 400,
-          d: 2,
+          d: 0,
         },
       },
     ];
@@ -424,10 +424,8 @@ function update(mod) {
               var { x, y, vx, vy } = player;
               player.x = other.x - (portal.y - y);
               player.y = other.y - (portal.x - x);
-              player.vx = -vy;
-              player.vy = -vx;
-              // player.vx = 0;
-              // player.vy = 0; //! temp
+              player.vx = vy;
+              player.vy = vx;
             }
 
             // Fix position and velocity
@@ -459,20 +457,34 @@ function update(mod) {
 
               // Adjust position (Different axis)
               case "ul":
-              case "ur":
-              case "dl":
               case "dr":
                 player.x +=
                   (player.h - player.w) *
-                  (player.vx < 0 ? 1 : 0);
+                  (player.vx < 0 ? 0 : 1);
+                player.vx *= -1;
+                player.vy *= -1;
+                break;
+              case "ur":
+              case "dl":
+                player.x +=
+                  player.vx > 0
+                    ? player.h + portalWidth
+                    : -player.w - portalWidth;
                 break;
               case "lu":
-              case "ld":
-              case "ru":
               case "rd":
                 player.y +=
                   (player.w - player.h) *
-                  (player.vy < 0 ? 1 : 0);
+                  (player.vy < 0 ? 0 : 1);
+                player.vx *= -1;
+                player.vy *= -1;
+                break;
+              case "ld":
+              case "ru":
+                player.y +=
+                  player.vy > 0
+                    ? player.w + portalWidth
+                    : -player.h - portalWidth;
                 break;
             }
           }
