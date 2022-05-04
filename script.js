@@ -18,8 +18,8 @@ const playerFall = 1000;
 
 const portalWidth = 10; // Width of portal (px)
 const portalBackWidth = 0.5; // Width of back (relative to portalWidth)
-const portalTransition = 100; // Duration of portal transition (ms)
-const portalTransitionOpacity = 0.1; // Opacity of player when transitioning (0-1)
+const portalTransition = 200; // Duration of portal transition (ms)
+const portalTransitionOpacity = 0.4; // Opacity of player when transitioning (0-1)
 
 // Global variables
 var cam, portals, player;
@@ -89,6 +89,7 @@ function reset() {
       },
     },
   ];
+
   for (var i in portals) {
     for (var color in portals[i]) {
       portals[i][color].l = 100;
@@ -192,10 +193,6 @@ function render() {
   var { x, y } = player;
   // Portal transition
   if (Date.now() - player.lastPortal < portalTransition) {
-    //! Test
-    ctx.fillStyle = "red";
-    ctx.fillRect(canvas.width - 40 + cam.x, cam.y, 40, 40);
-
     var transition =
       (Date.now() - player.lastPortal) / portalTransition;
     (x = player.ox - (player.ox - player.x) * transition),
@@ -204,10 +201,15 @@ function render() {
   }
 
   // Flip player
-  ctx.save();
-  ctx.translate(x + player.w / 2, y + player.h / 2);
-  ctx.scale(player.flipX ? -1 : 1, player.flipY ? -1 : 1);
-  ctx.translate(-x - player.w / 2, -y - player.h / 2);
+  if (
+    Date.now() - player.lastPortal >=
+    portalTransition / 2
+  ) {
+    ctx.save();
+    ctx.translate(x + player.w / 2, y + player.h / 2);
+    ctx.scale(player.flipX ? -1 : 1, player.flipY ? -1 : 1);
+    ctx.translate(-x - player.w / 2, -y - player.h / 2);
+  }
 
   ctx.fillStyle = "magenta";
   ctx.fillRect(x, y, player.w, player.h);
